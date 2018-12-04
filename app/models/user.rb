@@ -33,6 +33,14 @@ class User < ApplicationRecord
     Payment.feed_items_for(id)
   end
 
+  def add_to_balance(amount)
+    payment_account.increment!(:balance, amount)
+  end
+
+  def deduct_from_balance(amount)
+    payment_account.decrement!(:balance, amount)
+  end
+
   private
 
   def add_payment_account

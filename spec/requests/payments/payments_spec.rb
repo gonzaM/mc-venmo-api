@@ -17,6 +17,25 @@ describe 'POST users/:user_id', type: :request do
         post user_payments_path(user), params: params, as: :json
       end.to change(Payment, :count).by(1)
     end
+
+    context 'when the sender has balance' do
+      before do
+        user.add_to_balance(params[:amount].to_f)
+      end
+
+      it 'deducts balance from sender' do
+        post user_payments_path(user), params: params, as: :json
+        user.payment_account.reload
+        expect(user.balance).to eq 0
+      end
+
+      it 'increments balance to receiver' do
+        receiver_balance = friend.balance
+        post user_payments_path(user), params: params, as: :json
+        friend.payment_account.reload
+        expect(friend.balance).to eq receiver_balance + params[:amount].to_f
+      end
+    end
   end
 
   context 'when the receiver is not a friend' do

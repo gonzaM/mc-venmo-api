@@ -49,6 +49,22 @@ class Payment < ApplicationRecord
   end
 
   def transfer_money
-    MoneyTransferService.new(sender, receiver).transfer(amount)
+    sender_balance = sender.balance
+    new_sender_balance = sender_balance - amount
+    amount_from_balance = amount
+
+    if new_sender_balance.negative?
+      amount_from_balance = sender_balance
+      MoneyTransferService.new(sender, receiver).transfer(new_sender_balance)
+    end
+
+    adjust_balances(amount_from_balance)
+  end
+
+  def adjust_balances(amount)
+    sender.deduct_from_balance(amount)
+    receiver.add_to_balance(amount)
+    # Only increment the balance available,
+    # the rest is updated in the MoneyTransfer service once the transaction is done
   end
 end
